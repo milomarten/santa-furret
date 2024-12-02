@@ -1,6 +1,6 @@
 package com.github.milomarten.santa_furret.repository;
 
-import com.github.milomarten.santa_furret.models.exception.SecretSantaEvent;
+import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import org.springframework.data.repository.CrudRepository;
 
 import java.time.Instant;

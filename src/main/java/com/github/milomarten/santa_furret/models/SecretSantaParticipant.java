@@ -1,6 +1,5 @@
 package com.github.milomarten.santa_furret.models;
 
-import com.github.milomarten.santa_furret.models.exception.SecretSantaEvent;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
