@@ -1,6 +1,6 @@
-package com.github.milomarten.santa_furret.models;
+package com.github.milomarten.santa_furret.models.exception;
 
-import discord4j.common.util.Snowflake;
+import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;

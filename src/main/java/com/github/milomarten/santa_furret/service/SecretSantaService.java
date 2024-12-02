@@ -1,6 +1,9 @@
 package com.github.milomarten.santa_furret.service;
 
 import com.github.milomarten.santa_furret.models.*;
+import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
+import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
+import com.github.milomarten.santa_furret.models.exception.SecretSantaEvent;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
 import discord4j.common.util.Snowflake;
@@ -23,22 +26,30 @@ public class SecretSantaService {
 
     private final EntityManager entityManager;
 
-    public Optional<SecretSantaEvent> getCurrentSecretSantaEventFor(Snowflake guildId) {
+    public Optional<SecretSantaEvent> getCurrentEventFor(Snowflake guildId) {
         var now = Instant.now();
         return eventRepository.findByHomeGuildAndEventStartTimeLessThanAndEventEndTimeGreaterThan(
                 guildId.asLong(), now, now
         );
     }
 
-    public Optional<SecretSantaEvent> getCurrentSecretSantaEventEligibleForRegistration(Snowflake guildId) {
+    public Optional<SecretSantaEvent> getCurrentEventEligibleForRegistration(Snowflake guildId) {
         var now = Instant.now();
         return eventRepository.findByHomeGuildAndEventStartTimeLessThanAndRegistrationEndTimeGreaterThan(
                 guildId.asLong(), now, now
         );
     }
 
+    public Optional<SecretSantaEvent> getEvent(UUID uuid) {
+        return eventRepository.findById(uuid);
+    }
+
+    public List<SecretSantaEvent> getAllEventsForGuild(Snowflake guildId) {
+        return eventRepository.findByHomeGuild(guildId.asLong());
+    }
+
     public SecretSantaEvent createEvent(Snowflake guildId, Snowflake ownerId, SecretSantaOptions options) {
-        var eventMaybe = getCurrentSecretSantaEventFor(guildId);
+        var eventMaybe = getCurrentEventFor(guildId);
         if (eventMaybe.isPresent()) { throw new EventInProgressException(); }
 
         var event = new SecretSantaEvent();
@@ -51,19 +62,23 @@ public class SecretSantaService {
         return eventRepository.save(event);
     }
 
+    public void deleteEvent(UUID uuid) {
+        eventRepository.deleteById(uuid);
+    }
+
     public List<SecretSantaParticipant> getEventParticipants(UUID eventId) {
         return participantRepository.getByEventId(eventId);
     }
 
     public Optional<SecretSantaParticipant> getParticipant(Snowflake guildId, Snowflake participantId) {
-        var event = getCurrentSecretSantaEventFor(guildId)
+        var event = getCurrentEventFor(guildId)
                 .orElseThrow(EventNotInProgressException::new);
 
         return participantRepository.findById(new SecretSantaParticipant.Key(event.getId(), participantId.asLong()));
     }
 
     public SecretSantaParticipant addParticipant(Snowflake guildId, Snowflake participantId, ParticipantOptions options) {
-        var event = getCurrentSecretSantaEventEligibleForRegistration(guildId)
+        var event = getCurrentEventEligibleForRegistration(guildId)
                 .orElseThrow(RegistrationNotPermittedException::new);
 
         var p = new SecretSantaParticipant();
@@ -75,8 +90,21 @@ public class SecretSantaService {
         return participantRepository.save(p);
     }
 
+    public SecretSantaParticipant updateParticipant(Snowflake guildId, Snowflake participantId, ParticipantOptions options) {
+        var event = getCurrentEventFor(guildId)
+                .orElseThrow(RegistrationNotPermittedException::new);
+
+        var p = participantRepository.findById(new SecretSantaParticipant.Key(event.getId(), participantId.asLong()))
+                        .orElseThrow(RegistrationNotPermittedException::new);
+
+        p.setOkGivingNsfw(options.okGivingNsfw());
+        p.setOkReceivingNsfw(options.okReceivingNsfw());
+
+        return participantRepository.save(p);
+    }
+
     public void removeParticipant(Snowflake guildId, Snowflake participantId) {
-        var event = getCurrentSecretSantaEventEligibleForRegistration(guildId)
+        var event = getCurrentEventEligibleForRegistration(guildId)
                 .orElseThrow(RegistrationNotPermittedException::new);
 
         participantRepository.deleteById(new SecretSantaParticipant.Key(event.getId(), participantId.asLong()));
