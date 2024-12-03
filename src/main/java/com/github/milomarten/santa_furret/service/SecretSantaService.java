@@ -1,11 +1,13 @@
 package com.github.milomarten.santa_furret.service;
 
-import com.github.milomarten.santa_furret.models.*;
+import com.github.milomarten.santa_furret.models.EventStatus;
+import com.github.milomarten.santa_furret.models.ParticipantOptions;
+import com.github.milomarten.santa_furret.models.SecretSantaEvent;
+import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
 import com.github.milomarten.santa_furret.models.exception.NoSuchEvent;
 import com.github.milomarten.santa_furret.models.exception.RegistrationNotPermittedException;
-import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
 import discord4j.common.util.Snowflake;
@@ -16,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,14 +35,6 @@ public class SecretSantaService {
         return eventRepository.findByHomeGuildAndStatusNot(
                 guildId.asLong(), EventStatus.ENDED
         );
-    }
-
-    public Optional<SecretSantaEvent> getEvent(UUID uuid) {
-        return eventRepository.findById(uuid);
-    }
-
-    public List<SecretSantaEvent> getAllEventsForGuild(Snowflake guildId) {
-        return eventRepository.findByHomeGuild(guildId.asLong());
     }
 
     public SecretSantaEvent createEvent(Snowflake guildId, Snowflake ownerId) {
@@ -71,17 +64,6 @@ public class SecretSantaService {
 
     public boolean deleteEvent(UUID uuid, Snowflake ownerId) {
         return eventRepository.deleteByIdAndOrganizer(uuid, ownerId.asLong()) > 0;
-    }
-
-    public List<SecretSantaParticipant> getEventParticipants(UUID eventId) {
-        return participantRepository.getByEventId(eventId);
-    }
-
-    public Optional<SecretSantaParticipant> getParticipant(Snowflake guildId, Snowflake participantId) {
-        var event = getCurrentEventFor(guildId)
-                .orElseThrow(EventNotInProgressException::new);
-
-        return participantRepository.getByEventIdAndParticipantId(event.getId(), participantId.asLong());
     }
 
     public SecretSantaParticipant addParticipant(Snowflake guildId, Snowflake participantId) {
