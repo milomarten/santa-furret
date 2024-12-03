@@ -67,8 +67,8 @@ public class SecretSantaService {
         return eventRepository.save(event);
     }
 
-    public void deleteEvent(UUID uuid) {
-        eventRepository.deleteById(uuid);
+    public boolean deleteEvent(UUID uuid, Snowflake ownerId) {
+        return eventRepository.deleteByIdAndOrganizer(uuid, ownerId.asLong()) > 0;
     }
 
     public List<SecretSantaParticipant> getEventParticipants(UUID eventId) {
@@ -125,7 +125,7 @@ public class SecretSantaService {
 
     @PostConstruct
     private void init() {
-        createEvent(
+        var evt = createEvent(
                 Snowflake.of(423976318082744321L),
                 Snowflake.of(248612704019808258L),
                 new SecretSantaOptions(
@@ -135,5 +135,6 @@ public class SecretSantaService {
                         LocalDate.of(2024, 12, 31).atStartOfDay(ZoneId.systemDefault()).toInstant()
                 )
         );
+        System.out.println("The dummy event ID is " + evt);
     }
 }

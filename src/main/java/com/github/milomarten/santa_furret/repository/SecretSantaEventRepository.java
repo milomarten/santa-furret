@@ -12,4 +12,5 @@ public interface SecretSantaEventRepository extends CrudRepository<SecretSantaEv
     Optional<SecretSantaEvent> findByHomeGuildAndEventStartTimeLessThanAndEventEndTimeGreaterThan(long homeGuild, Instant time, Instant time2);
     Optional<SecretSantaEvent> findByHomeGuildAndEventStartTimeLessThanAndRegistrationEndTimeGreaterThan(long homeGuild, Instant time, Instant time2);
     List<SecretSantaEvent> findByHomeGuild(long homeGuild);
+    int deleteByIdAndOrganizer(UUID id, long organizer);
 }

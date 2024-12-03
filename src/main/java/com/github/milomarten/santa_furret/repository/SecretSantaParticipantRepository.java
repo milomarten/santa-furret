@@ -10,6 +10,5 @@ import java.util.UUID;
 public interface SecretSantaParticipantRepository extends CrudRepository<SecretSantaParticipant, UUID> {
     List<SecretSantaParticipant> getByEventId(UUID eventId);
     Optional<SecretSantaParticipant> getByEventIdAndParticipantId(UUID eventId, long participantId);
-    boolean existsByEventIdAndParticipantId(UUID eventId, long participantId);
     int deleteByEventIdAndParticipantId(UUID eventId, long participantId);
 }
