@@ -1,33 +1,26 @@
 package com.github.milomarten.santa_furret.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "participant")
-@IdClass(SecretSantaParticipant.Key.class)
+@Table(name = "participant", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"eventId", "participantId"})
+})
 public class SecretSantaParticipant {
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @ManyToOne
     @JoinColumn(name = "eventId")
     @ToString.Exclude
-    @Id
     private SecretSantaEvent event;
-    @Id
     private long participantId;
 
     private boolean okReceivingNsfw;
     private boolean okGivingNsfw;
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Key {
-        private UUID event;
-        private long participantId;
-    }
 }

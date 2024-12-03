@@ -1,7 +1,9 @@
 package com.github.milomarten.santa_furret.commands;
 
+import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
 import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
+import com.github.milomarten.santa_furret.commands.parameter.ParameterValidationFailure;
 import com.github.milomarten.santa_furret.models.SecretSantaOptions;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
@@ -49,7 +51,7 @@ public class CreateEventCommand implements SecretSantaCommand {
     public ApplicationCommandRequest getSpec() {
         return ApplicationCommandRequest.builder()
                 .name("create")
-                .description("Create a secret santa event!")
+                .description("Create a Secret Santa event!")
                 .defaultMemberPermissions(Permission.MANAGE_GUILD.single())
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("event-start")
@@ -91,10 +93,7 @@ public class CreateEventCommand implements SecretSantaCommand {
 
     @Override
     public Response handleCommand(ChatInputInteractionEvent event) {
-        var guildId = event.getInteraction().getGuildId();
-        if (guildId.isEmpty()) {
-            return Responses.ephemeral("To create an event, you must run this command from your server!");
-        }
+        var guildId = GuildIdResolver.required().resolve(event);
         var eventRunner = event.getInteraction().getUser().getId();
 
         var timezone = TIMEZONE.resolve(event);
@@ -115,7 +114,7 @@ public class CreateEventCommand implements SecretSantaCommand {
                 eventEnd.toInstant()
         );
 
-        Mono<String> message = Mono.fromCallable(() -> service.createEvent(guildId.get(), eventRunner, options))
+        Mono<String> message = Mono.fromCallable(() -> service.createEvent(guildId, eventRunner, options))
                 .map(ss -> """
                         Your event has been created! The ID is %s, don't forget it!
                         The event will formally kick off at <t:%d:f>.

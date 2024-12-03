@@ -23,6 +23,11 @@ public class Parameter<T> {
         return new Parameter<>(path, ApplicationCommandInteractionOptionValue::asString);
     }
 
+    public static Parameter<Boolean> bool(String... path) {
+        if (path.length == 0) throw new IllegalArgumentException("path length must be >0");
+        return new Parameter<>(path, ApplicationCommandInteractionOptionValue::asBoolean);
+    }
+
     public Parameter<T> validate(ValidationStep<T> step) {
         this.validationSteps.add(step);
         return this;
@@ -59,6 +64,16 @@ public class Parameter<T> {
                     this.validationSteps.forEach(step -> step.validate(item));
                     return item;
                 });
+    }
+
+    public ParameterResolver<T> optional(T defaultValue) {
+        return event -> followPath(event)
+                .map(resolver)
+                .map(item -> {
+                    this.validationSteps.forEach(step -> step.validate(item));
+                    return item;
+                })
+                .orElse(defaultValue);
     }
 
     public ParameterResolver<T> required() {
