@@ -21,23 +21,9 @@ public class SecretSantaEvent {
     @OneToMany(mappedBy = "event")
     @ToString.Exclude
     private List<SecretSantaParticipant> participants = new ArrayList<>();
-    private Instant eventStartTime;
-    private Instant registrationEndTime;
-    private Instant giftingStartTime;
-    private Instant eventEndTime;
+    private EventStatus status;
 
     public EventStatus getCurrentStatus() {
-        var now = Instant.now();
-        if (now.isAfter(eventEndTime)) {
-            return EventStatus.ENDED;
-        } else if (now.isAfter(giftingStartTime)) {
-            return EventStatus.GIFTING;
-        } else if (now.isAfter(registrationEndTime)) {
-            return EventStatus.SHOPPING;
-        } else if (now.isAfter(eventStartTime)) {
-            return EventStatus.REGISTRATION;
-        } else {
-            return EventStatus.NOT_STARTED;
-        }
+        return this.status;
     }
 }

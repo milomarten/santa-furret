@@ -3,6 +3,7 @@ package com.github.milomarten.santa_furret.service;
 import com.github.milomarten.santa_furret.models.*;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
+import com.github.milomarten.santa_furret.models.exception.NoSuchEvent;
 import com.github.milomarten.santa_furret.models.exception.RegistrationNotPermittedException;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
@@ -15,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,15 +31,8 @@ public class SecretSantaService {
 
     public Optional<SecretSantaEvent> getCurrentEventFor(Snowflake guildId) {
         var now = Instant.now();
-        return eventRepository.findByHomeGuildAndEventStartTimeLessThanAndEventEndTimeGreaterThan(
-                guildId.asLong(), now, now
-        );
-    }
-
-    public Optional<SecretSantaEvent> getCurrentEventEligibleForRegistration(Snowflake guildId) {
-        var now = Instant.now();
-        return eventRepository.findByHomeGuildAndEventStartTimeLessThanAndRegistrationEndTimeGreaterThan(
-                guildId.asLong(), now, now
+        return eventRepository.findByHomeGuildAndStatusNot(
+                guildId.asLong(), EventStatus.ENDED
         );
     }
 
@@ -52,18 +44,28 @@ public class SecretSantaService {
         return eventRepository.findByHomeGuild(guildId.asLong());
     }
 
-    public SecretSantaEvent createEvent(Snowflake guildId, Snowflake ownerId, SecretSantaOptions options) {
+    public SecretSantaEvent createEvent(Snowflake guildId, Snowflake ownerId) {
         var eventMaybe = getCurrentEventFor(guildId);
         if (eventMaybe.isPresent()) { throw new EventInProgressException(); }
 
         var event = new SecretSantaEvent();
         event.setHomeGuild(guildId.asLong());
         event.setOrganizer(ownerId.asLong());
-        event.setEventStartTime(options.startDate());
-        event.setEventEndTime(options.endDate());
-        event.setGiftingStartTime(options.giftDate());
-        event.setRegistrationEndTime(options.drawDate());
+        event.setStatus(EventStatus.NOT_STARTED);
 
+        return eventRepository.save(event);
+    }
+
+    public SecretSantaEvent startEvent(UUID eventId, Snowflake ownerId) {
+        var eventMaybe = eventRepository.findByIdAndOrganizer(eventId, ownerId.asLong());
+        if (eventMaybe.isEmpty()) { throw new NoSuchEvent(); }
+
+        var event = eventMaybe.get();
+        if (event.getCurrentStatus() != EventStatus.NOT_STARTED) {
+            throw new EventInProgressException();
+        }
+
+        event.setStatus(EventStatus.REGISTRATION);
         return eventRepository.save(event);
     }
 
@@ -127,13 +129,7 @@ public class SecretSantaService {
     private void init() {
         var evt = createEvent(
                 Snowflake.of(423976318082744321L),
-                Snowflake.of(248612704019808258L),
-                new SecretSantaOptions(
-                        LocalDate.of(2024, 12, 1).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                        LocalDate.of(2024, 12, 25).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                        LocalDate.of(2024, 12, 28).atStartOfDay(ZoneId.systemDefault()).toInstant(),
-                        LocalDate.of(2024, 12, 31).atStartOfDay(ZoneId.systemDefault()).toInstant()
-                )
+                Snowflake.of(248612704019808258L)
         );
         System.out.println("The dummy event ID is " + evt);
     }
