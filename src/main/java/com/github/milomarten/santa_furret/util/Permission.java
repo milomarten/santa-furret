@@ -1,4 +1,4 @@
-package com.github.milomarten.santa_furret.commands;
+package com.github.milomarten.santa_furret.util;
 
 import java.math.BigInteger;
 import java.util.BitSet;

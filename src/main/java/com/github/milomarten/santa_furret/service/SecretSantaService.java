@@ -58,6 +58,7 @@ public class SecretSantaService {
         event.setOrganizer(ownerId.asLong());
         event.setEventStartTime(options.startDate());
         event.setEventEndTime(options.endDate());
+        event.setGiftingStartTime(options.giftDate());
         event.setRegistrationEndTime(options.drawDate());
 
         return eventRepository.save(event);

@@ -1,5 +1,6 @@
 package com.github.milomarten.santa_furret.commands;
 
+import com.github.milomarten.santa_furret.util.Permission;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

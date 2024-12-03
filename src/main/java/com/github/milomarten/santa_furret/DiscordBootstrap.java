@@ -1,6 +1,7 @@
 package com.github.milomarten.santa_furret;
 
 import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.parameter.ParameterValidationFailure;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -47,9 +48,15 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
     public void onApplicationEvent(ApplicationReadyEvent _e) {
         client.withGateway(gateway -> {
             var chatInputHook = gateway
-                    .on(ChatInputInteractionEvent.class, event -> commandMap
+                    .on(ChatInputInteractionEvent.class, event -> Mono.defer(() -> commandMap
                             .getOrDefault(event.getCommandName(), SecretSantaCommand.NOOP)
-                            .handleCommand(event))
+                            .handleCommand(event)
+                            .respond(event))
+                            .then()
+                            .onErrorResume(ParameterValidationFailure.class, ex ->
+                                    event.reply(ex.getMessage()).withEphemeral(true)
+                            )
+                    )
                     .onErrorContinue((ex, obj) -> log.error("Error with Chat Input Hook: {}", obj, ex));
             var textHook = gateway
                     .on(MessageCreateEvent.class, event -> {
