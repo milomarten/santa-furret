@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,6 +97,13 @@ public class SecretSantaService {
         return participantRepository.save(p);
     }
 
+    public List<SecretSantaParticipant> getParticipants(Snowflake guildId) {
+        var event = getCurrentEventFor(guildId)
+                .orElseThrow(EventNotInProgressException::new);
+
+        return participantRepository.getByEventId(event.getId());
+    }
+
     public boolean removeParticipant(Snowflake guildId, Snowflake participantId) {
         var event = getCurrentEventFor(guildId)
                 .orElseThrow(EventNotInProgressException::new);
@@ -113,6 +121,7 @@ public class SecretSantaService {
                 Snowflake.of(423976318082744321L),
                 Snowflake.of(248612704019808258L)
         );
+        startEvent(evt.getId(), Snowflake.of(evt.getOrganizer()));
         System.out.println("The dummy event ID is " + evt);
     }
 }
