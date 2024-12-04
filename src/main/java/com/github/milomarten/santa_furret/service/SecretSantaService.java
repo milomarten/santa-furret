@@ -1,11 +1,9 @@
 package com.github.milomarten.santa_furret.service;
 
-import com.github.milomarten.santa_furret.models.EventStatus;
-import com.github.milomarten.santa_furret.models.ParticipantOptions;
-import com.github.milomarten.santa_furret.models.SecretSantaEvent;
-import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
+import com.github.milomarten.santa_furret.models.*;
 import com.github.milomarten.santa_furret.models.exception.*;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
+import com.github.milomarten.santa_furret.repository.SecretSantaMatchupRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
 import discord4j.common.util.Snowflake;
 import jakarta.annotation.PostConstruct;
@@ -25,6 +23,7 @@ import java.util.UUID;
 public class SecretSantaService {
     private final SecretSantaEventRepository eventRepository;
     private final SecretSantaParticipantRepository participantRepository;
+    private final SecretSantaMatchupRepository matchupRepository;
 
     private final EntityManager entityManager;
 
@@ -52,7 +51,7 @@ public class SecretSantaService {
         if (eventMaybe.isEmpty()) { throw new NoSuchEvent(); }
 
         var event = eventMaybe.get();
-        if (event.getCurrentStatus() != EventStatus.NOT_STARTED) {
+        if (event.getStatus() != EventStatus.NOT_STARTED) {
             throw new EventInProgressException();
         }
 
@@ -67,7 +66,7 @@ public class SecretSantaService {
     public SecretSantaParticipant addParticipant(Snowflake guildId, Snowflake participantId) {
         var event = getCurrentEventFor(guildId)
                 .orElseThrow(EventNotInProgressException::new);
-        if (event.getCurrentStatus() == EventStatus.REGISTRATION) {
+        if (event.getStatus() == EventStatus.REGISTRATION) {
 
             var p = new SecretSantaParticipant();
             p.setEvent(entityManager.getReference(SecretSantaEvent.class, event.getId()));
@@ -104,7 +103,7 @@ public class SecretSantaService {
     public boolean removeParticipant(Snowflake guildId, Snowflake participantId) {
         var event = getCurrentEventFor(guildId)
                 .orElseThrow(EventNotInProgressException::new);
-        if (event.getCurrentStatus() == EventStatus.REGISTRATION) {
+        if (event.getStatus() == EventStatus.REGISTRATION) {
             var numDel = participantRepository.deleteByEventIdAndParticipantId(event.getId(), participantId.asLong());
             return numDel > 0;
         } else {
@@ -142,6 +141,23 @@ public class SecretSantaService {
                 Snowflake.of(248612704019808258L)
         );
         startEvent(evt.getId(), Snowflake.of(evt.getOrganizer()));
+
         System.out.println("The dummy event ID is " + evt);
+
+        var participant = new SecretSantaParticipant();
+        participant.setParticipantId(248612704019808258L);
+        participant.setEvent(evt);
+        participant = participantRepository.save(participant);
+
+        var participant2 = new SecretSantaParticipant();
+        participant.setParticipantId(252289670522601472L);
+        participant.setEvent(evt);
+        participant2 = participantRepository.save(participant2);
+
+        var matchup = new SecretSantaMatchup();
+        matchup.setSanta(participant);
+        matchup.setGiftee(participant2);
+        matchup.setEvent(evt);
+        matchup = matchupRepository.save(matchup);
     }
 }

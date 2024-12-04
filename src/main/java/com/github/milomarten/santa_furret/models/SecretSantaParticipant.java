@@ -3,7 +3,7 @@ package com.github.milomarten.santa_furret.models;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,6 +12,8 @@ import java.util.UUID;
 @Table(name = "participant", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"eventId", "participantId"})
 })
+@NoArgsConstructor
+@AllArgsConstructor
 public class SecretSantaParticipant {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,5 +33,5 @@ public class SecretSantaParticipant {
             name = "blacklist",
             joinColumns = @JoinColumn(name = "participantId")
     )
-    private Set<Long> blacklist;
+    private Set<Long> blacklist = new HashSet<>();
 }

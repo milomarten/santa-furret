@@ -1,5 +1,3 @@
 spring:
   application:
     name: santa-furret
-  jpa:
-    show-sql: true

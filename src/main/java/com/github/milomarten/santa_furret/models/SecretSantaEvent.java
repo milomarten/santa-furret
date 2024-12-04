@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,9 +20,8 @@ public class SecretSantaEvent {
     @OneToMany(mappedBy = "event")
     @ToString.Exclude
     private List<SecretSantaParticipant> participants = new ArrayList<>();
+    @OneToMany(mappedBy = "event")
+    @ToString.Exclude
+    private List<SecretSantaMatchup> matchups = new ArrayList<>();
     private EventStatus status;
-
-    public EventStatus getCurrentStatus() {
-        return this.status;
-    }
 }
