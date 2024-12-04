@@ -4,10 +4,7 @@ import com.github.milomarten.santa_furret.models.EventStatus;
 import com.github.milomarten.santa_furret.models.ParticipantOptions;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
-import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
-import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
-import com.github.milomarten.santa_furret.models.exception.NoSuchEvent;
-import com.github.milomarten.santa_furret.models.exception.RegistrationNotPermittedException;
+import com.github.milomarten.santa_furret.models.exception.*;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
 import discord4j.common.util.Snowflake;
@@ -113,6 +110,29 @@ public class SecretSantaService {
         } else {
             throw new RegistrationNotPermittedException();
         }
+    }
+
+    public SecretSantaParticipant addBlacklist(Snowflake guildId, Snowflake participantId, Snowflake blacklistId) {
+        var event = getCurrentEventFor(guildId)
+                .orElseThrow(EventNotInProgressException::new);
+        if (event.getStatus() == EventStatus.REGISTRATION) {
+            var user = participantRepository.getByEventIdAndParticipantId(event.getId(), participantId.asLong())
+                    .orElseThrow(ParticipantNotRegisteredException::new);
+            user.getBlacklist().add(blacklistId.asLong());
+            return participantRepository.save(user);
+        } else {
+            throw new EventInProgressException();
+        }
+    }
+
+    public SecretSantaParticipant removeBlacklist(Snowflake guildId, Snowflake participantId, Snowflake blacklistId) {
+        var event = getCurrentEventFor(guildId)
+                .orElseThrow(EventNotInProgressException::new);
+
+        var user = participantRepository.getByEventIdAndParticipantId(event.getId(), participantId.asLong())
+                .orElseThrow(ParticipantNotRegisteredException::new);
+        user.getBlacklist().remove(blacklistId.asLong());
+        return participantRepository.save(user);
     }
 
     @PostConstruct

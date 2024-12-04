@@ -3,6 +3,8 @@ package com.github.milomarten.santa_furret.models;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -23,4 +25,11 @@ public class SecretSantaParticipant {
 
     private boolean okReceivingNsfw;
     private boolean okGivingNsfw;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "blacklist",
+            joinColumns = @JoinColumn(name = "participantId")
+    )
+    private Set<Long> blacklist;
 }

@@ -1,6 +1,7 @@
 package com.github.milomarten.santa_furret.commands.parameter;
 
 import com.github.milomarten.santa_furret.commands.parameter.validation.ValidationStep;
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
@@ -19,13 +20,22 @@ public class Parameter<T> {
     private final List<ValidationStep<T>> validationSteps = new ArrayList<>();
 
     public static Parameter<String> string(String... path) {
-        if (path.length == 0) throw new IllegalArgumentException("path length must be >0");
+        validatePath(path);
         return new Parameter<>(path, ApplicationCommandInteractionOptionValue::asString);
     }
 
     public static Parameter<Boolean> bool(String... path) {
-        if (path.length == 0) throw new IllegalArgumentException("path length must be >0");
+        validatePath(path);
         return new Parameter<>(path, ApplicationCommandInteractionOptionValue::asBoolean);
+    }
+
+    public static Parameter<Snowflake> snowflake(String... path) {
+        validatePath(path);
+        return new Parameter<>(path, ApplicationCommandInteractionOptionValue::asSnowflake);
+    }
+
+    private static void validatePath(String[] path) {
+        if (path.length == 0) throw new IllegalArgumentException("path length must be >0");
     }
 
     public Parameter<T> validate(ValidationStep<T> step) {
