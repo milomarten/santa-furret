@@ -1,5 +1,6 @@
 package com.github.milomarten.santa_furret.service;
 
+import com.github.milomarten.santa_furret.matchup.GenerateMatchupsService;
 import com.github.milomarten.santa_furret.models.*;
 import com.github.milomarten.santa_furret.models.exception.*;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class SecretSantaService {
     private final SecretSantaEventRepository eventRepository;
     private final SecretSantaParticipantRepository participantRepository;
     private final SecretSantaMatchupRepository matchupRepository;
+    private final GenerateMatchupsService generateMatchupsService;
 
     private final EntityManager entityManager;
 
@@ -132,6 +135,21 @@ public class SecretSantaService {
                 .orElseThrow(ParticipantNotRegisteredException::new);
         user.getBlacklist().remove(blacklistId.asLong());
         return participantRepository.save(user);
+    }
+
+    public List<SecretSantaMatchup> generateMatchups(Snowflake guildId, Snowflake ownerId) {
+        var event = getCurrentEventFor(guildId)
+                .filter(sse -> sse.getOrganizer() == ownerId.asLong())
+                .orElseThrow(EventNotInProgressException::new);
+        if (event.getStatus() == EventStatus.REGISTRATION) {
+            var matchups = generateMatchupsService.createMatchups(event.getParticipants());
+
+            List<SecretSantaMatchup> returnList = new ArrayList<>();
+            matchupRepository.saveAll(matchups).forEach(returnList::add);
+            return returnList;
+        } else {
+            throw new InvalidEventState();
+        }
     }
 
     @PostConstruct
