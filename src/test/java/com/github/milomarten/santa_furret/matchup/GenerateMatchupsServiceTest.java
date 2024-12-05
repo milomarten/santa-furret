@@ -14,14 +14,14 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class GenerateMatchupsJobTest {
-    private static final GenerateMatchupsJob job = new GenerateMatchupsJob();
+class GenerateMatchupsServiceTest {
+    private static final GenerateMatchupsService job = new GenerateMatchupsService();
 
     @ParameterizedTest
     @ValueSource(ints = {0, 1, 2, 3, 4})
     public void testNParticipants(int n) {
         var participates = IntStream.range(0, n)
-                        .mapToObj(GenerateMatchupsJobTest::make)
+                        .mapToObj(GenerateMatchupsServiceTest::make)
                         .toList();
         assertThrows(NotEnoughParticipantsException.class, () -> job.createMatchups(participates));
     }
@@ -31,9 +31,8 @@ class GenerateMatchupsJobTest {
         var result = job.createMatchups(List.of(
                 make(1), make(2), make(3), make(4), make(5)
         ));
-        assertEquals(5, result.matchups().size());
-        assertEquals(0, result.problemSantas().size());
-        for (var matchup : result.matchups()) {
+        assertEquals(5, result.size());
+        for (var matchup : result) {
             assertNotEquals(matchup.getSanta().getParticipantId(), matchup.getGiftee().getParticipantId());
         }
     }
@@ -43,8 +42,7 @@ class GenerateMatchupsJobTest {
         var result = job.createMatchups(List.of(
                 make(1), make(2), make(3), make(4), make(5, 3)
         ));
-        assertEquals(5, result.matchups().size());
-        assertEquals(0, result.problemSantas().size());
+        assertEquals(5, result.size());
     }
 
     @RepeatedTest(10)
@@ -52,26 +50,23 @@ class GenerateMatchupsJobTest {
         var result = job.createMatchups(List.of(
                 make(1, 2), make(2, 3), make(3, 4), make(4, 5), make(5, 1)
         ));
-        assertEquals(5, result.matchups().size());
-        assertEquals(0, result.problemSantas().size());
+        assertEquals(5, result.size());
     }
 
     @Test
     public void test5ParticipantsEveryoneHatesOneGuy() {
-        var result = job.createMatchups(List.of(
+        assertThrows(UnableToAssignGiftee.class, () -> job.createMatchups(List.of(
                 make(1),
                 make(2, 1),
                 make(3, 1),
                 make(4, 1),
                 make(5, 1)
-        ));
-        assertEquals(4, result.matchups().size());
-        assertEquals(1, result.problemSantas().size());
+        )));
     }
 
     @Test
     public void test5ParticipantsCrazyBlacklists() {
-        assertThrows(NotEnoughParticipantsException.class, () -> job.createMatchups(List.of(
+        assertThrows(UnableToAssignGiftee.class, () -> job.createMatchups(List.of(
                 // This list is impossible to handle; two IDs can only match to one person, a no-no.
                 make(1),
                 make(2, 3, 4),
@@ -81,10 +76,10 @@ class GenerateMatchupsJobTest {
         )));
     }
 
-    @Test
+    @RepeatedTest(10)
     public void test5ParticipantsOnlyOneOption() {
         var result = job.createMatchups(List.of(
-                // This list is impossible to handle; two IDs can only match to one person, a no-no.
+                // 1 could only ever be matched to 2. All other options are valid.
                 make(1),
                 make(2),
                 make(3, 1),
@@ -92,7 +87,7 @@ class GenerateMatchupsJobTest {
                 make(5, 1)
         ));
 
-        assertEquals(5, result.matchups().size());
+        assertEquals(5, result.size());
     }
 
     private static SecretSantaParticipant make(long id) {
