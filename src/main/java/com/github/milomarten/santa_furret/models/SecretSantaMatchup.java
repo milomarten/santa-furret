@@ -32,4 +32,6 @@ public class SecretSantaMatchup {
     @JoinColumn(name = "eventId")
     @ToString.Exclude
     private SecretSantaEvent event;
+
+    private boolean gifteeReceivedGift;
 }

@@ -144,6 +144,8 @@ public class SecretSantaService {
         if (event.getStatus() == EventStatus.REGISTRATION) {
             var matchups = generateMatchupsService.createMatchups(event.getParticipants());
 
+            event.setStatus(EventStatus.GIFTING);
+            eventRepository.save(event);
             List<SecretSantaMatchup> returnList = new ArrayList<>();
             matchupRepository.saveAll(matchups).forEach(returnList::add);
             return returnList;
