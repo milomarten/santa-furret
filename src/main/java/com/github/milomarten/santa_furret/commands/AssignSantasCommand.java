@@ -42,6 +42,8 @@ public class AssignSantasCommand implements SecretSantaCommand {
             return """
                     Matchups have been made! There are %d total entrants. I'll be sending each Santa a DM \
                     over the next few moments with their giftee. How exciting!
+                    For you, here are the commands for the next steps:
+                    Use `/begin-gifting` to indicate that users should begin gifting their presents! It is up to you to tell them where to do so.
                     """.formatted(matchups.size());
         })
                 .onErrorResume(ex -> {

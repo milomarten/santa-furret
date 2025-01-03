@@ -161,7 +161,7 @@ public class GenerateMatchupsService {
     private static SecretSantaMatchup makeMatchup(SecretSantaParticipant santa, SecretSantaParticipant giftee) {
         return new SecretSantaMatchup(
                 null,
-                santa, giftee, santa.getEvent()
+                santa, giftee, santa.getEvent(), false
         );
     }
 }

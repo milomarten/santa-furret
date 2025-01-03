@@ -2,6 +2,7 @@ package com.github.milomarten.santa_furret;
 
 import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterValidationFailure;
+import com.github.milomarten.santa_furret.service.CachedUsernameService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -31,6 +32,7 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
 
     private final DiscordClient client;
     private final List<SecretSantaCommand> commands;
+    private final CachedUsernameService cachedUsernameService;
 
     private final Map<String, SecretSantaCommand> commandMap = new HashMap<>();
     private final List<ApplicationCommandRequest> requests = new ArrayList<>();
@@ -47,6 +49,7 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
     @Override
     public void onApplicationEvent(ApplicationReadyEvent _e) {
         client.withGateway(gateway -> {
+            cachedUsernameService.setClient(gateway);
             var chatInputHook = gateway
                     .on(ChatInputInteractionEvent.class, event -> Mono.defer(() -> commandMap
                             .getOrDefault(event.getCommandName(), SecretSantaCommand.NOOP)

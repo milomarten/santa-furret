@@ -5,10 +5,7 @@ import com.github.milomarten.santa_furret.models.EventStatus;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.models.SecretSantaMatchup;
 import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
-import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
-import com.github.milomarten.santa_furret.models.exception.EventNotFoundException;
-import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
-import com.github.milomarten.santa_furret.models.exception.MatchupNotPermittedException;
+import com.github.milomarten.santa_furret.models.exception.*;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaMatchupRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
@@ -18,10 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -74,13 +68,36 @@ public class AdminSecretSantaService {
         if (event.getStatus() == EventStatus.REGISTRATION) {
             var matchups = generateMatchupsService.createMatchups(event.getParticipants());
 
-            event.setStatus(EventStatus.GIFTING);
+            event.setStatus(EventStatus.SHOPPING);
             eventRepository.save(event);
             List<SecretSantaMatchup> returnList = new ArrayList<>();
             matchupRepository.saveAll(matchups).forEach(returnList::add);
             return returnList;
         } else {
             throw new MatchupNotPermittedException();
+        }
+    }
+
+    public void beginGifting(Snowflake guildId, Snowflake ownerId) {
+        var event = getCurrentEventFor(guildId, ownerId)
+                .orElseThrow(EventNotInProgressException::new);
+
+        if (event.getStatus() == EventStatus.SHOPPING) {
+            event.setStatus(EventStatus.GIFTING);
+            eventRepository.save(event);
+        } else {
+            throw new GiftingNotPermittedException();
+        }
+    }
+
+    public List<SecretSantaMatchup> getMatchups(Snowflake guildId, Snowflake ownerId) {
+        var event = getCurrentEventFor(guildId, ownerId)
+                .orElseThrow(EventNotInProgressException::new);
+
+        if (event.getStatus() == EventStatus.SHOPPING) {
+            return new ArrayList<>(event.getMatchups());
+        } else {
+            throw new GiftingNotPermittedException();
         }
     }
 
@@ -100,8 +117,8 @@ public class AdminSecretSantaService {
         participant = participantRepository.save(participant);
 
         var participant2 = new SecretSantaParticipant();
-        participant.setParticipantId(252289670522601472L);
-        participant.setEvent(evt);
+        participant2.setParticipantId(252289670522601472L);
+        participant2.setEvent(evt);
         participant2 = participantRepository.save(participant2);
 
         var matchup = new SecretSantaMatchup();
@@ -109,5 +126,8 @@ public class AdminSecretSantaService {
         matchup.setGiftee(participant2);
         matchup.setEvent(evt);
         matchup = matchupRepository.save(matchup);
+
+        evt.setStatus(EventStatus.SHOPPING);
+        eventRepository.save(evt);
     }
 }
