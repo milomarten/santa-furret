@@ -3,7 +3,8 @@ package com.github.milomarten.santa_furret.commands;
 import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
-import com.github.milomarten.santa_furret.models.exception.NoSuchEvent;
+import com.github.milomarten.santa_furret.models.exception.EventNotFoundException;
+import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class StartEventCommand implements SecretSantaCommand {
-    private final SecretSantaService service;
+    private final AdminSecretSantaService service;
 
     private static final ParameterResolver<UUID> EVENT_ID = Parameter.string("event-id")
             .convertLossy(UUID::fromString, "Event ID is in UUIDv4 format")
@@ -56,7 +57,7 @@ public class StartEventCommand implements SecretSantaCommand {
                 })
                 .onErrorResume(e -> {
                     if (e instanceof EventInProgressException) { return Mono.just("This event is already in progress."); }
-                    else if (e instanceof NoSuchEvent) { return Mono.just("I don't know any event with that ID."); }
+                    else if (e instanceof EventNotFoundException) { return Mono.just("I don't know any event with that ID."); }
                     else { return Mono.just(e.getMessage()); }
                 });
         return Responses.delayedEphemeral(message);

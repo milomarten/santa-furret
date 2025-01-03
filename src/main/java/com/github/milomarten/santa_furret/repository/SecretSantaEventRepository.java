@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public interface SecretSantaEventRepository extends CrudRepository<SecretSantaEvent, UUID> {
     Optional<SecretSantaEvent> findByHomeGuildAndStatusNot(long homeGuild, EventStatus status);
+    Optional<SecretSantaEvent> findByHomeGuildAndOrganizerAndStatusNot(long homeGuild, long organizer, EventStatus status);
     int deleteByIdAndOrganizer(UUID id, long organizer);
     Optional<SecretSantaEvent> findByIdAndOrganizer(UUID id, long organizer);
 }

@@ -5,7 +5,7 @@ import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
-import com.github.milomarten.santa_furret.models.exception.ParticipantNotRegisteredException;
+import com.github.milomarten.santa_furret.models.exception.ParticipantNotFoundException;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -49,7 +49,7 @@ public class BlacklistCommand implements SecretSantaCommand {
                 .onErrorResume(ex -> switch (ex) {
                     case EventNotInProgressException ignored ->
                             Mono.just("There isn't currently an event in progress.");
-                    case ParticipantNotRegisteredException ignored ->
+                    case ParticipantNotFoundException ignored ->
                             Mono.just("You aren't currently registered for the event! You need to register first.");
                     case EventInProgressException ignored ->
                             Mono.just("The matchups have already been chosen. Talk with the event owner for help.");

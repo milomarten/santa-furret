@@ -2,6 +2,7 @@ package com.github.milomarten.santa_furret.commands;
 
 import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
+import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -21,7 +22,7 @@ public class DeleteEventCommand implements SecretSantaCommand {
             .convertLossy(UUID::fromString, "Event IDs are in UUIDv4 format")
             .required();
 
-    private final SecretSantaService service;
+    private final AdminSecretSantaService service;
 
     @Override
     public ApplicationCommandRequest getSpec() {

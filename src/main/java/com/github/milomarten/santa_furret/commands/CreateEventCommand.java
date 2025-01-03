@@ -2,7 +2,7 @@ package com.github.milomarten.santa_furret.commands;
 
 import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
 import com.github.milomarten.santa_furret.models.exception.EventInProgressException;
-import com.github.milomarten.santa_furret.service.SecretSantaService;
+import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.discordjson.json.ApplicationCommandRequest;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class CreateEventCommand implements SecretSantaCommand {
-    private final SecretSantaService service;
+    private final AdminSecretSantaService service;
 
     @Override
     public ApplicationCommandRequest getSpec() {

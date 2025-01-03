@@ -1,10 +1,12 @@
 package com.github.milomarten.santa_furret.commands;
 
 import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
+import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
 import com.github.milomarten.santa_furret.matchup.NotEnoughParticipantsException;
 import com.github.milomarten.santa_furret.matchup.UnableToAssignGiftee;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
-import com.github.milomarten.santa_furret.models.exception.InvalidEventState;
+import com.github.milomarten.santa_furret.models.exception.MatchupNotPermittedException;
+import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.common.util.Snowflake;
@@ -18,7 +20,7 @@ import reactor.core.publisher.Mono;
 @Component
 @RequiredArgsConstructor
 public class AssignSantasCommand implements SecretSantaCommand {
-    private final SecretSantaService service;
+    private final AdminSecretSantaService service;
 
     @Override
     public ApplicationCommandRequest getSpec() {
@@ -32,7 +34,7 @@ public class AssignSantasCommand implements SecretSantaCommand {
     @Override
     public Response handleCommand(ChatInputInteractionEvent event) {
         var guildId = GuildIdResolver.required().resolve(event);
-        var userId = event.getInteraction().getUser().getId();
+        var userId = IdentityResolver.user().resolve(event).getId();
 
         var message = Mono.fromCallable(() -> {
             var matchups = service.generateMatchups(guildId, userId);
@@ -47,7 +49,7 @@ public class AssignSantasCommand implements SecretSantaCommand {
                         case EventNotInProgressException ignored -> {
                             return Mono.just("There is currently no event in progress.");
                         }
-                        case InvalidEventState ignored -> {
+                        case MatchupNotPermittedException ignored -> {
                             return Mono.just("You can only draw names for an event currently in registration state.");
                         }
                         case NotEnoughParticipantsException ignored -> {

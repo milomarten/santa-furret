@@ -1,8 +1,6 @@
-package com.github.milomarten.santa_furret.commands.parameter;
+package com.github.milomarten.santa_furret.commands;
 
-import com.github.milomarten.santa_furret.commands.Response;
-import com.github.milomarten.santa_furret.commands.Responses;
-import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;

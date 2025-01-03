@@ -1,8 +1,8 @@
-package com.github.milomarten.santa_furret.commands.parameter;
+package com.github.milomarten.santa_furret.commands;
 
-import com.github.milomarten.santa_furret.commands.Response;
-import com.github.milomarten.santa_furret.commands.Responses;
-import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
+import com.github.milomarten.santa_furret.commands.parameter.Parameter;
+import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
 import com.github.milomarten.santa_furret.models.ParticipantOptions;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
 import com.github.milomarten.santa_furret.models.exception.RegistrationNotPermittedException;
