@@ -57,6 +57,15 @@ public class AdminSecretSantaService {
         return eventRepository.save(event);
     }
 
+    public SecretSantaEvent endEvent(UUID eventId, Snowflake ownerId) {
+        var eventMaybe = eventRepository.findByIdAndOrganizer(eventId, ownerId.asLong());
+        if (eventMaybe.isEmpty()) { throw new EventNotFoundException(); }
+
+        var event = eventMaybe.get();
+        event.setStatus(EventStatus.ENDED);
+        return eventRepository.save(event);
+    }
+
     public boolean deleteEvent(UUID uuid, Snowflake ownerId) {
         return eventRepository.deleteByIdAndOrganizer(uuid, ownerId.asLong()) > 0;
     }
