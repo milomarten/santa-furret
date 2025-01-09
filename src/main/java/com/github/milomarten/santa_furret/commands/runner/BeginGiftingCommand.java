@@ -1,5 +1,8 @@
-package com.github.milomarten.santa_furret.commands;
+package com.github.milomarten.santa_furret.commands.runner;
 
+import com.github.milomarten.santa_furret.commands.Response;
+import com.github.milomarten.santa_furret.commands.Responses;
+import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
 import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
 import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;

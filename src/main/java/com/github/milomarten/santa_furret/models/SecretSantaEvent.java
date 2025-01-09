@@ -1,5 +1,6 @@
 package com.github.milomarten.santa_furret.models;
 
+import discord4j.common.util.Snowflake;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
@@ -24,4 +25,8 @@ public class SecretSantaEvent {
     @ToString.Exclude
     private List<SecretSantaMatchup> matchups = new ArrayList<>();
     private EventStatus status;
+
+    public boolean validateOrganizer(Snowflake id) {
+        return id.asLong() == this.organizer;
+    }
 }

@@ -4,7 +4,6 @@ import com.github.milomarten.santa_furret.matchup.GenerateMatchupsService;
 import com.github.milomarten.santa_furret.models.EventStatus;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.models.SecretSantaMatchup;
-import com.github.milomarten.santa_furret.models.SecretSantaParticipant;
 import com.github.milomarten.santa_furret.models.exception.*;
 import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.repository.SecretSantaMatchupRepository;
@@ -15,7 +14,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -120,23 +122,23 @@ public class AdminSecretSantaService {
 
         System.out.println("The dummy event ID is " + evt);
 
-        var participant = new SecretSantaParticipant();
-        participant.setParticipantId(248612704019808258L);
-        participant.setEvent(evt);
-        participant = participantRepository.save(participant);
-
-        var participant2 = new SecretSantaParticipant();
-        participant2.setParticipantId(252289670522601472L);
-        participant2.setEvent(evt);
-        participant2 = participantRepository.save(participant2);
-
-        var matchup = new SecretSantaMatchup();
-        matchup.setSanta(participant);
-        matchup.setGiftee(participant2);
-        matchup.setEvent(evt);
-        matchup = matchupRepository.save(matchup);
-
-        evt.setStatus(EventStatus.SHOPPING);
-        eventRepository.save(evt);
+//        var participant = new SecretSantaParticipant();
+//        participant.setParticipantId(248612704019808258L);
+//        participant.setEvent(evt);
+//        participant = participantRepository.save(participant);
+//
+//        var participant2 = new SecretSantaParticipant();
+//        participant2.setParticipantId(252289670522601472L);
+//        participant2.setEvent(evt);
+//        participant2 = participantRepository.save(participant2);
+//
+//        var matchup = new SecretSantaMatchup();
+//        matchup.setSanta(participant);
+//        matchup.setGiftee(participant2);
+//        matchup.setEvent(evt);
+//        matchup = matchupRepository.save(matchup);
+//
+//        evt.setStatus(EventStatus.SHOPPING);
+//        eventRepository.save(evt);
     }
 }

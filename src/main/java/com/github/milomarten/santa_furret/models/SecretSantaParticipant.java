@@ -1,7 +1,10 @@
 package com.github.milomarten.santa_furret.models;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,7 +31,7 @@ public class SecretSantaParticipant {
     private boolean okReceivingNsfw;
     private boolean okGivingNsfw;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "blacklist",
             joinColumns = @JoinColumn(name = "participantId")

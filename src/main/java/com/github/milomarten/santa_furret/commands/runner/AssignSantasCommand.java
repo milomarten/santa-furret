@@ -1,5 +1,8 @@
-package com.github.milomarten.santa_furret.commands;
+package com.github.milomarten.santa_furret.commands.runner;
 
+import com.github.milomarten.santa_furret.commands.Response;
+import com.github.milomarten.santa_furret.commands.Responses;
+import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
 import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
 import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
 import com.github.milomarten.santa_furret.matchup.NotEnoughParticipantsException;
@@ -7,7 +10,6 @@ import com.github.milomarten.santa_furret.matchup.UnableToAssignGiftee;
 import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
 import com.github.milomarten.santa_furret.models.exception.MatchupNotPermittedException;
 import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
-import com.github.milomarten.santa_furret.service.SecretSantaService;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
