@@ -114,13 +114,13 @@ public class AdminSecretSantaService {
 
     @PostConstruct
     private void init() {
-        var evt = createEvent(
-                Snowflake.of(423976318082744321L),
-                Snowflake.of(248612704019808258L)
-        );
-        startEvent(evt.getId(), Snowflake.of(evt.getOrganizer()));
-
-        System.out.println("The dummy event ID is " + evt);
+//        var evt = createEvent(
+//                Snowflake.of(423976318082744321L),
+//                Snowflake.of(248612704019808258L)
+//        );
+//        startEvent(evt.getId(), Snowflake.of(evt.getOrganizer()));
+//
+//        System.out.println("The dummy event ID is " + evt);
 
 //        var participant = new SecretSantaParticipant();
 //        participant.setParticipantId(248612704019808258L);

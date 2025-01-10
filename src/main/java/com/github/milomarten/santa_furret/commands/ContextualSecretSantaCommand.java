@@ -31,6 +31,7 @@ public abstract class ContextualSecretSantaCommand implements SecretSantaCommand
                     .orElse(null);
         })
                 .flatMap(sse -> {
+                    hook(sse, event);
                     if (expectedStatuses().contains(sse.getStatus())) {
                         try {
                             return Mono.just(handleCommand(sse, event));
@@ -59,4 +60,6 @@ public abstract class ContextualSecretSantaCommand implements SecretSantaCommand
     protected String unexpectedStatusMessage(EventStatus actual) {
         return "Now isn't the time to use that command!";
     }
+
+    protected void hook(SecretSantaEvent event, ChatInputInteractionEvent cmd) {}
 }
