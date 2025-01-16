@@ -3,11 +3,13 @@ package com.github.milomarten.santa_furret;
 import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterValidationFailure;
 import com.github.milomarten.santa_furret.service.CachedUsernameService;
+import com.github.milomarten.santa_furret.service.diff.CommandDiffService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.discordjson.json.ApplicationCommandData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +19,13 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @Component
@@ -33,6 +37,7 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
     private final DiscordClient client;
     private final List<SecretSantaCommand> commands;
     private final CachedUsernameService cachedUsernameService;
+    private final CommandDiffService diffService;
 
     private final Map<String, SecretSantaCommand> commandMap = new HashMap<>();
     private final List<ApplicationCommandRequest> requests = new ArrayList<>();
@@ -68,15 +73,19 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
                             var appService = gateway.getRestClient().getApplicationService();
                             var appId = gateway.getRestClient().getApplicationId();
                             if (content.equals("!local")) {
-                                return runOverwriteCommand(appId, id -> appService.bulkOverwriteGuildApplicationCommand(
-                                        id, 423976318082744321L, this.requests
-                                ))
-                                    .flatMap(u -> event.getMessage().addReaction(u));
+                                return runDiffOverwriteCommand(appId,
+                                        id -> appService.getGuildApplicationCommands(id, 423976318082744321L),
+                                        id -> appService.bulkOverwriteGuildApplicationCommand(id, 423976318082744321L, this.requests),
+                                        (id, cid) -> appService.deleteGuildApplicationCommand(id, 423976318082744321L, cid)
+                                )
+                                .flatMap(t -> event.getMessage().getChannel().flatMap(mc -> mc.createMessage(t.toString())));
                             } else if (content.equals("!global")) {
-                                return runOverwriteCommand(appId, id -> appService.bulkOverwriteGlobalApplicationCommand(
-                                        id, this.requests
-                                ))
-                                    .flatMap(u -> event.getMessage().addReaction(u));
+                                return runDiffOverwriteCommand(appId,
+                                        appService::getGlobalApplicationCommands,
+                                        id -> appService.bulkOverwriteGlobalApplicationCommand(id, this.requests),
+                                        appService::deleteGlobalApplicationCommand
+                                )
+                                .flatMap(t -> event.getMessage().getChannel().flatMap(mc -> mc.createMessage(t.toString())));
                             }
                         }
                         return Mono.empty();
@@ -98,6 +107,30 @@ public class DiscordBootstrap implements ApplicationListener<ApplicationReadyEve
                     log.error("Error updating commands locally", e);
                     return Mono.just(ReactionEmoji.unicode("☒"));
                 });
+    }
+
+    private Mono<Tuple2<Integer, Integer>> runDiffOverwriteCommand(
+            Mono<Long> appId,
+            Function<Long, Flux<ApplicationCommandData>> getter,
+            Function<Long, Flux<?>> updater,
+            BiFunction<Long, Long, Mono<Void>> deleter) {
+        return appId.flatMap(id -> {
+                    return getter.apply(id)//appService.getGuildApplicationCommands(id, 423976318082744321L)
+                            .collectList()
+                            .map(acd -> diffService.findDiff(acd, this.requests))
+                            .flatMap(diff -> {
+                                var bulkDelete = Flux.fromIterable(diff.subtracted())
+                                        .flatMap(cid -> deleter.apply(id, cid).thenReturn(1))
+                                        .collectList()
+                                        .map(List::size);
+                                var bulkAdd = updater.apply(id)
+                                        .collectList()
+                                        .map(List::size);
+
+                                return Mono.zip(bulkAdd, bulkDelete);
+                            });
+                });
+//                .flatMap(t -> event.getMessage().getChannel().flatMap(mc -> mc.createMessage(t.toString())));
     }
 
     private boolean isMe(MessageCreateEvent evt) {
