@@ -23,7 +23,7 @@ public class CachedUsernameService {
     public Mono<String> getUsername(Snowflake id) {
         return cache.computeIfAbsent(id, (snowflake) -> {
             return Mono.defer(() -> client.getUserById(id).map(User::getUsername))
-                    .cache(Duration.ofMinutes(15));
+                    .cache(Duration.ofMinutes(30));
         });
     }
 }

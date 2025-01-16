@@ -1,6 +1,7 @@
 package com.github.milomarten.santa_furret.commands;
 
 import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
+import com.github.milomarten.santa_furret.service.CachedUsernameService;
 import com.github.milomarten.santa_furret.service.SecretSantaService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -17,6 +18,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class EntrantsCommand implements SecretSantaCommand {
     private final SecretSantaService service;
+    private final CachedUsernameService usernameService;
 
     @Override
     public ApplicationCommandRequest getSpec() {
@@ -32,10 +34,7 @@ public class EntrantsCommand implements SecretSantaCommand {
 
         var response = Mono.fromCallable(() -> service.getParticipants(guildId))
                 .flatMapIterable(Function.identity())
-                .flatMap(participant -> event.getClient()
-                        .getUserById(Snowflake.of(participant.getParticipantId()))
-                        .map(User::getUsername)
-                )
+                .flatMap(participant -> usernameService.getUsername(Snowflake.of(participant.getParticipantId())))
                 .collectList()
                 .map(list -> {
                     if (list.isEmpty()) {

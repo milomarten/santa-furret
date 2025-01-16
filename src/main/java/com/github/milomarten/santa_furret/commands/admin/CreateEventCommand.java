@@ -1,4 +1,4 @@
-package com.github.milomarten.santa_furret.commands.runner;
+package com.github.milomarten.santa_furret.commands.admin;
 
 import com.github.milomarten.santa_furret.commands.Response;
 import com.github.milomarten.santa_furret.commands.Responses;

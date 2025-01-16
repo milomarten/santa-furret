@@ -1,8 +1,10 @@
-package com.github.milomarten.santa_furret.commands.parameter;
+package com.github.milomarten.santa_furret.commands.admin;
 
 import com.github.milomarten.santa_furret.commands.Response;
 import com.github.milomarten.santa_furret.commands.Responses;
 import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
+import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
 import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
 import com.github.milomarten.santa_furret.service.CachedUsernameService;
 import com.github.milomarten.santa_furret.util.Permission;
