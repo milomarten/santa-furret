@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class GenerateMatchupsService {
-    private static final int MINIMUM_PARTICIPANTS = 5;
+    public static final int MINIMUM_PARTICIPANTS = 5;
     private static final RandomGenerator RNG = RandomGenerator.getDefault();
 
     /**

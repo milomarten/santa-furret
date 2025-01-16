@@ -1,11 +1,10 @@
 package com.github.milomarten.santa_furret.commands.runner;
 
-import com.github.milomarten.santa_furret.commands.Response;
-import com.github.milomarten.santa_furret.commands.Responses;
-import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.ContextualAdminSecretSantaCommand;
 import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
-import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
+import com.github.milomarten.santa_furret.models.SecretSantaEvent;
+import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandOption;
@@ -13,18 +12,18 @@ import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class DeleteEventCommand implements SecretSantaCommand {
+public class DeleteEventCommand extends ContextualAdminSecretSantaCommand {
     private static final ParameterResolver<UUID> EVENT_ID = Parameter.string("event-id")
             .convertLossy(UUID::fromString, "Event IDs are in UUIDv4 format")
             .required();
 
-    private final AdminSecretSantaService service;
+    private final SecretSantaEventRepository repository;
 
     @Override
     public ApplicationCommandRequest getSpec() {
@@ -43,14 +42,13 @@ public class DeleteEventCommand implements SecretSantaCommand {
     }
 
     @Override
-    public Response handleCommand(ChatInputInteractionEvent event) {
-        var eventId = EVENT_ID.resolve(event);
-        var userId = event.getInteraction().getUser().getId();
-
-        var message = Mono.fromCallable(() -> service.deleteEvent(eventId, userId))
-                .map(deleted -> deleted ?
-                        "The event was deleted." :
-                        "I couldn't delete that event. Check the ID, and remember only the owner can delete their event.");
-        return Responses.delayedEphemeral(message);
+    public String handleCommand(SecretSantaEvent event, ChatInputInteractionEvent cmd) {
+        var eventId = EVENT_ID.resolve(cmd);
+        if (Objects.equals(event.getId(), eventId)) {
+            repository.deleteById(eventId);
+            return "The event was deleted.";
+        } else {
+            return "The event ID provided was incorrect. Please check and try again!";
+        }
     }
 }

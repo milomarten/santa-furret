@@ -1,30 +1,22 @@
 package com.github.milomarten.santa_furret.commands.runner;
 
-import com.github.milomarten.santa_furret.commands.Response;
-import com.github.milomarten.santa_furret.commands.Responses;
-import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
-import com.github.milomarten.santa_furret.commands.parameter.Parameter;
-import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
-import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
+import com.github.milomarten.santa_furret.commands.ContextualAdminSecretSantaCommand;
+import com.github.milomarten.santa_furret.models.EventStatus;
+import com.github.milomarten.santa_furret.models.SecretSantaEvent;
+import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.command.ApplicationCommandOption;
-import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
-import java.util.UUID;
+import java.util.EnumSet;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class EndEventCommand implements SecretSantaCommand {
-    private static final ParameterResolver<UUID> EVENT_ID = Parameter.string("event-id")
-            .convertLossy(UUID::fromString, "Event IDs are in UUIDv4 format")
-            .required();
-
-    private final AdminSecretSantaService service;
+public class EndEventCommand extends ContextualAdminSecretSantaCommand {
+    private final SecretSantaEventRepository repository;
 
     @Override
     public ApplicationCommandRequest getSpec() {
@@ -32,23 +24,23 @@ public class EndEventCommand implements SecretSantaCommand {
                 .name("end")
                 .description("End a Secret Santa event")
                 .defaultMemberPermissions(Permission.MANAGE_GUILD.single())
-                .addOption(ApplicationCommandOptionData.builder()
-                        .name("event-id")
-                        .description("The Event ID of the event to delete")
-                        .type(ApplicationCommandOption.Type.STRING.getValue())
-                        .required(true)
-                        .minLength(36).maxLength(36)
-                        .build())
                 .build();
     }
 
     @Override
-    public Response handleCommand(ChatInputInteractionEvent event) {
-        var eventId = EVENT_ID.resolve(event);
-        var userId = event.getInteraction().getUser().getId();
+    public String handleCommand(SecretSantaEvent event, ChatInputInteractionEvent cmd) {
+        event.setStatus(EventStatus.ENDED);
+        repository.save(event);
+        return "The event has been ended. Thanks for having me!";
+    }
 
-        var message = Mono.fromCallable(() -> service.endEvent(eventId, userId))
-                .thenReturn("The event was deleted.");
-        return Responses.delayedEphemeral(message);
+    @Override
+    protected Set<EventStatus> expectedStatuses() {
+        return EnumSet.of(EventStatus.GIFTING);
+    }
+
+    @Override
+    protected String unexpectedStatusMessage(EventStatus actual) {
+        return "The event has already ended.";
     }
 }

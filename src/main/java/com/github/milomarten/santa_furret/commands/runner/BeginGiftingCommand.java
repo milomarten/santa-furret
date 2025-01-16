@@ -1,24 +1,22 @@
 package com.github.milomarten.santa_furret.commands.runner;
 
-import com.github.milomarten.santa_furret.commands.Response;
-import com.github.milomarten.santa_furret.commands.Responses;
-import com.github.milomarten.santa_furret.commands.SecretSantaCommand;
-import com.github.milomarten.santa_furret.commands.parameter.GuildIdResolver;
-import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
-import com.github.milomarten.santa_furret.models.exception.EventNotInProgressException;
-import com.github.milomarten.santa_furret.models.exception.GiftingNotPermittedException;
-import com.github.milomarten.santa_furret.service.AdminSecretSantaService;
+import com.github.milomarten.santa_furret.commands.ContextualAdminSecretSantaCommand;
+import com.github.milomarten.santa_furret.models.EventStatus;
+import com.github.milomarten.santa_furret.models.SecretSantaEvent;
+import com.github.milomarten.santa_furret.repository.SecretSantaEventRepository;
 import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
+
+import java.util.EnumSet;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class BeginGiftingCommand implements SecretSantaCommand {
-    private final AdminSecretSantaService service;
+public class BeginGiftingCommand extends ContextualAdminSecretSantaCommand {
+    private final SecretSantaEventRepository repository;
 
     @Override
     public ApplicationCommandRequest getSpec() {
@@ -30,34 +28,29 @@ public class BeginGiftingCommand implements SecretSantaCommand {
     }
 
     @Override
-    public Response handleCommand(ChatInputInteractionEvent event) {
-        var guildId = GuildIdResolver.required().resolve(event);
-        var userId = IdentityResolver.user().resolve(event).getId();
+    public String handleCommand(SecretSantaEvent event, ChatInputInteractionEvent cmd) {
+        event.setStatus(EventStatus.GIFTING);
+        repository.save(event);
+        return """
+            The gifting period has begun! I have some tools to allow you to help gifting go smoothly.
+            Use `/mark-received <username>` to mark a participant as receiving their gift.
+            Use `/view-unreceived giftee` to view all participants that have not received their gift yet.
+            Conversely, use `/view-unreceived santas` to view all santas that have not sent their gift yet.
+            Finally, you can end the event with `/end`.
+        """;
+    }
 
-        var message = Mono.fromCallable(() -> {
-            service.beginGifting(guildId, userId);
-            return """
-                    The gifting period has begun! I have some tools to allow you to help gifting go smoothly.
-                    Use `/mark-received <username>` to mark a participant as receiving their gift.
-                    Use `/view-unreceived giftee` to view all participants that have not received their gift yet.
-                    Conversely, use `/view-unreceived santas` to view all santas that have not sent their gift yet.
-                    Finally, you can end the event with `/end`.
-                    """;
-        })
-                .onErrorResume(ex -> {
-                    switch (ex) {
-                        case EventNotInProgressException ignored -> {
-                            return Mono.just("There is currently no event in progress.");
-                        }
-                        case GiftingNotPermittedException ignored -> {
-                            return Mono.just("You can only start gifting an event that is in the Shopping phase");
-                        }
-                        default -> {
-                            return Mono.just(ex.getMessage());
-                        }
-                    }
-                });
+    @Override
+    protected Set<EventStatus> expectedStatuses() {
+        return EnumSet.of(EventStatus.SHOPPING);
+    }
 
-        return Responses.delayedEphemeral(message);
+    @Override
+    protected String unexpectedStatusMessage(EventStatus actual) {
+        if (actual == EventStatus.NOT_STARTED || actual == EventStatus.REGISTRATION) {
+            return "Can't begin gifting until matchups are made.";
+        } else {
+            return "Gifting has already been started";
+        }
     }
 }

@@ -24,7 +24,6 @@ import java.util.UUID;
 @Transactional
 public class AdminSecretSantaService {
     private final SecretSantaEventRepository eventRepository;
-    private final SecretSantaParticipantRepository participantRepository;
     private final SecretSantaMatchupRepository matchupRepository;
     private final GenerateMatchupsService generateMatchupsService;
 
@@ -34,71 +33,15 @@ public class AdminSecretSantaService {
         );
     }
 
-    public SecretSantaEvent createEvent(Snowflake guildId, Snowflake ownerId) {
-        var eventMaybe = getCurrentEventFor(guildId, ownerId);
-        if (eventMaybe.isPresent()) { throw new EventInProgressException(); }
+    public List<SecretSantaMatchup> generateMatchups(UUID eventId) {
+        var event = eventRepository.findById(eventId).orElseThrow();
+        var matchups = generateMatchupsService.createMatchups(event.getParticipants());
 
-        var event = new SecretSantaEvent();
-        event.setHomeGuild(guildId.asLong());
-        event.setOrganizer(ownerId.asLong());
-        event.setStatus(EventStatus.NOT_STARTED);
-
-        return eventRepository.save(event);
-    }
-
-    public SecretSantaEvent startEvent(UUID eventId, Snowflake ownerId) {
-        var eventMaybe = eventRepository.findByIdAndOrganizer(eventId, ownerId.asLong());
-        if (eventMaybe.isEmpty()) { throw new EventNotFoundException(); }
-
-        var event = eventMaybe.get();
-        if (event.getStatus() != EventStatus.NOT_STARTED) {
-            throw new EventInProgressException();
-        }
-
-        event.setStatus(EventStatus.REGISTRATION);
-        return eventRepository.save(event);
-    }
-
-    public SecretSantaEvent endEvent(UUID eventId, Snowflake ownerId) {
-        var eventMaybe = eventRepository.findByIdAndOrganizer(eventId, ownerId.asLong());
-        if (eventMaybe.isEmpty()) { throw new EventNotFoundException(); }
-
-        var event = eventMaybe.get();
-        event.setStatus(EventStatus.ENDED);
-        return eventRepository.save(event);
-    }
-
-    public boolean deleteEvent(UUID uuid, Snowflake ownerId) {
-        return eventRepository.deleteByIdAndOrganizer(uuid, ownerId.asLong()) > 0;
-    }
-
-    public List<SecretSantaMatchup> generateMatchups(Snowflake guildId, Snowflake ownerId) {
-        var event = getCurrentEventFor(guildId, ownerId)
-                .orElseThrow(EventNotInProgressException::new);
-
-        if (event.getStatus() == EventStatus.REGISTRATION) {
-            var matchups = generateMatchupsService.createMatchups(event.getParticipants());
-
-            event.setStatus(EventStatus.SHOPPING);
-            eventRepository.save(event);
-            List<SecretSantaMatchup> returnList = new ArrayList<>();
-            matchupRepository.saveAll(matchups).forEach(returnList::add);
-            return returnList;
-        } else {
-            throw new MatchupNotPermittedException();
-        }
-    }
-
-    public void beginGifting(Snowflake guildId, Snowflake ownerId) {
-        var event = getCurrentEventFor(guildId, ownerId)
-                .orElseThrow(EventNotInProgressException::new);
-
-        if (event.getStatus() == EventStatus.SHOPPING) {
-            event.setStatus(EventStatus.GIFTING);
-            eventRepository.save(event);
-        } else {
-            throw new GiftingNotPermittedException();
-        }
+        event.setStatus(EventStatus.SHOPPING);
+        eventRepository.save(event);
+        List<SecretSantaMatchup> returnList = new ArrayList<>();
+        matchupRepository.saveAll(matchups).forEach(returnList::add);
+        return returnList;
     }
 
     public List<SecretSantaMatchup> getMatchups(Snowflake guildId, Snowflake ownerId) {
