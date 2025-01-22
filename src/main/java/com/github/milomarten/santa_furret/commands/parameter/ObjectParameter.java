@@ -1,24 +1,19 @@
 package com.github.milomarten.santa_furret.commands.parameter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.milomarten.santa_furret.commands.parameter.validation.ValidationStep;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.core.object.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.Singular;
-import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class ObjectParameter<T> implements ParameterResolver<T>, ApplicationCommandOptionReader<T> {
