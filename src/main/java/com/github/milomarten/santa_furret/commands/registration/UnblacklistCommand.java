@@ -1,12 +1,14 @@
 package com.github.milomarten.santa_furret.commands.registration;
 
 import com.github.milomarten.santa_furret.commands.ContextualSecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.admin.BlacklistCommand;
 import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
 import com.github.milomarten.santa_furret.commands.parameter.Parameter;
 import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
 import com.github.milomarten.santa_furret.models.EventStatus;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
+import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandOption;
@@ -21,9 +23,6 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class UnblacklistCommand extends ContextualSecretSantaCommand {
-    private static final ParameterResolver<Snowflake> USER = Parameter.snowflake("user")
-            .required();
-
     private final SecretSantaParticipantRepository repository;
 
     @Override
@@ -33,10 +32,17 @@ public class UnblacklistCommand extends ContextualSecretSantaCommand {
                 .description("Remove a user from your blacklist.")
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("user")
-                        .description("The user you want to un-blacklist.")
+                        .description("The user whose blacklist you want to modify.")
                         .type(ApplicationCommandOption.Type.USER.getValue())
                         .required(true)
                         .build())
+                .addOption(ApplicationCommandOptionData.builder()
+                        .name("target")
+                        .description("The user to remove from the blacklist.")
+                        .type(ApplicationCommandOption.Type.USER.getValue())
+                        .required(true)
+                        .build())
+                .defaultMemberPermissions(Permission.MANAGE_GUILD.single())
                 .build();
     }
 
@@ -47,16 +53,15 @@ public class UnblacklistCommand extends ContextualSecretSantaCommand {
 
     @Override
     public String handleCommand(SecretSantaEvent event, ChatInputInteractionEvent cmd) {
-        var userId = IdentityResolver.user().resolve(cmd).getId();
-        var blockId = USER.resolve(cmd);
+        var parameters = BlacklistCommand.Parameter.PARSER.resolve(cmd);
 
-        var userMaybe = repository.getByEventIdAndParticipantId(event.getId(), userId.asLong());
+        var userMaybe = repository.getByEventIdAndParticipantId(event.getId(), parameters.getUserId().asLong());
         if (userMaybe.isEmpty()) {
             return "You must first register for this event with `/register`";
         }
 
         var entry = userMaybe.get();
-        if (entry.getBlacklist().remove(blockId.asLong())) {
+        if (entry.getBlacklist().remove(parameters.getTargetId().asLong())) {
             repository.save(entry);
             return "Sure, I removed that user from your blacklist.";
         } else {

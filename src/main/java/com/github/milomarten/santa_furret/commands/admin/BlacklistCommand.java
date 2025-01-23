@@ -1,17 +1,17 @@
-package com.github.milomarten.santa_furret.commands.registration;
+package com.github.milomarten.santa_furret.commands.admin;
 
-import com.github.milomarten.santa_furret.commands.ContextualSecretSantaCommand;
-import com.github.milomarten.santa_furret.commands.parameter.IdentityResolver;
-import com.github.milomarten.santa_furret.commands.parameter.Parameter;
-import com.github.milomarten.santa_furret.commands.parameter.ParameterResolver;
+import com.github.milomarten.santa_furret.commands.ContextualAdminSecretSantaCommand;
+import com.github.milomarten.santa_furret.commands.parameter.ObjectParameter;
 import com.github.milomarten.santa_furret.models.EventStatus;
 import com.github.milomarten.santa_furret.models.SecretSantaEvent;
 import com.github.milomarten.santa_furret.repository.SecretSantaParticipantRepository;
+import com.github.milomarten.santa_furret.util.Permission;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,10 +20,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
-public class BlacklistCommand extends ContextualSecretSantaCommand {
-    private static final ParameterResolver<Snowflake> USER = Parameter.snowflake("user")
-            .required();
-
+public class BlacklistCommand extends ContextualAdminSecretSantaCommand {
     private final SecretSantaParticipantRepository repository;
 
     @Override
@@ -33,10 +30,17 @@ public class BlacklistCommand extends ContextualSecretSantaCommand {
                 .description("Mark a user that you are not comfortable being matched with.")
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("user")
-                        .description("The user you want to blacklist.")
+                        .description("The user whose blacklist you want to modify.")
                         .type(ApplicationCommandOption.Type.USER.getValue())
                         .required(true)
                         .build())
+                .addOption(ApplicationCommandOptionData.builder()
+                        .name("target")
+                        .description("The user to add to the blacklist.")
+                        .type(ApplicationCommandOption.Type.USER.getValue())
+                        .required(true)
+                        .build())
+                .defaultMemberPermissions(Permission.MANAGE_GUILD.single())
                 .build();
     }
 
@@ -47,18 +51,17 @@ public class BlacklistCommand extends ContextualSecretSantaCommand {
 
     @Override
     public String handleCommand(SecretSantaEvent event, ChatInputInteractionEvent cmd) {
-        var userId = IdentityResolver.user().resolve(cmd).getId();
-        var blockId = USER.resolve(cmd);
+        var parameters = Parameter.PARSER.resolve(cmd);
 
-        var userMaybe = repository.getByEventIdAndParticipantId(event.getId(), userId.asLong());
+        var userMaybe = repository.getByEventIdAndParticipantId(event.getId(), parameters.userId.asLong());
         if (userMaybe.isEmpty()) {
             return "You must first register for this event with `/register`";
         }
         var entry = userMaybe.get();
-        entry.getBlacklist().add(blockId.asLong());
+        entry.getBlacklist().add(parameters.targetId.asLong());
         repository.save(entry);
 
-        return "Sure, I blacklisted that user for you.";
+        return "Sure, blacklisting complete.";
     }
 
     @Override
@@ -68,5 +71,16 @@ public class BlacklistCommand extends ContextualSecretSantaCommand {
         } else {
             return "The matchups have already been chosen for this event. Talk with the event owner for help.";
         }
+    }
+
+    @Data
+    public static class Parameter {
+        private Snowflake userId;
+        private Snowflake targetId;
+
+        public static final ObjectParameter<Parameter> PARSER =
+                new ObjectParameter<>(Parameter::new)
+                        .asSnowflake("user", Parameter::setUserId)
+                        .asSnowflake("target", Parameter::setTargetId);
     }
 }

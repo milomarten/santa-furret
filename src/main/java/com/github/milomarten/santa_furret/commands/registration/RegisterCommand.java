@@ -57,8 +57,8 @@ public class RegisterCommand extends ContextualSecretSantaCommand {
             - You can use `/update` to update your NSFW preferences at any time.
             - You can use `/unregister` to back out before the registration deadline, no sweat. If you need \
             to back out after that, contact the event organizer.
-            - You can use `/blacklist` during registration to indicate that you aren't comfortable being matched up with someone. \
-            I'll make sure they aren't your gifter or your giftee.
+            - You can talk to the event runner during registration to indicate that you aren't comfortable being matched up with someone. \
+            We'll make sure they aren't your gifter or your giftee.
             Thanks again!
             """;
     }
